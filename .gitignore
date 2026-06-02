@@ -1,0 +1,69 @@
+## ----- C# / .NET -----
+
+# Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+packages/
+!**/packages/build/
+nuget.config.user
+
+# Visual Studio user-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+.vs/
+*.rsuser
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Visual Studio Code (keep .vscode/launch.json & tasks.json if present)
+.vscode/settings.json
+.vscode/.ropeproject
+
+# MSBuild binary logs
+*.binlog
+
+# Publish profiles
+**/Properties/PublishProfiles/
+
+# ASP.NET Core
+# User secrets are per-machine — never commit them
+**/appsettings.Development.json.user
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+coverage*/
+*.coverage
+*.coveragexml
+*.trx
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# .NET tools manifest lock
+.config/dotnet-tools.json.lock
+
+## ----- Secrets / environment -----
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+
+## ----- OS artefacts -----
+.DS_Store
+Thumbs.db
+desktop.ini

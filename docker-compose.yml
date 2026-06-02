@@ -1,0 +1,47 @@
+# docker-compose.yml
+# Local development environment for the API microservices demo.
+# All Dockerfiles use the repo root as build context so solution file is accessible.
+
+services:
+
+  product-service:
+    build:
+      context: .
+      dockerfile: src/Services/ProductService/ProductService.API/Dockerfile
+    image: apidesign/product-service:latest
+    container_name: product-service
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - apidesign-net
+
+  order-service:
+    build:
+      context: .
+      dockerfile: src/Services/OrderService/OrderService.API/Dockerfile
+    image: apidesign/order-service:latest
+    container_name: order-service
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - apidesign-net
+
+networks:
+  apidesign-net:
+    driver: bridge

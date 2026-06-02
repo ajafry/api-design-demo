@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SharedKernel/SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/OrderService/">
+    <Project Path="src/Services/OrderService/OrderService.API/OrderService.API.csproj" />
+    <Project Path="src/Services/OrderService/OrderService.Application/OrderService.Application.csproj" />
+    <Project Path="src/Services/OrderService/OrderService.Domain/OrderService.Domain.csproj" />
+    <Project Path="src/Services/OrderService/OrderService.Infrastructure/OrderService.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/ProductService/">
+    <Project Path="src/Services/ProductService/ProductService.API/ProductService.API.csproj" />
+    <Project Path="src/Services/ProductService/ProductService.Application/ProductService.Application.csproj" />
+    <Project Path="src/Services/ProductService/ProductService.Domain/ProductService.Domain.csproj" />
+    <Project Path="src/Services/ProductService/ProductService.Infrastructure/ProductService.Infrastructure.csproj" />
+  </Folder>
+</Solution>

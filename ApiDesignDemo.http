@@ -1,0 +1,180 @@
+# API Microservices Demo — REST Client requests
+# Requires the "REST Client" VS Code extension (humao.rest-client)
+#
+# QUICK START
+#   1. Start both services (dotnet run or docker compose up --build)
+#   2. Run "GET all products" and "GET all orders" first
+#   3. Copy a real ID from each response into the variables below
+#   4. Click "Send Request" above any block to execute it
+
+@productHost = http://localhost:5001
+@orderHost   = http://localhost:5002
+
+# ── paste a real product ID from GET /api/products here ──────────────────────
+@productId = da0f3f5e-45f9-46e8-910a-a52b8b76f9d1
+
+# ── paste a real order ID from GET /api/orders here ──────────────────────────
+@orderId = 00000000-0000-0000-0000-000000000000
+
+# ── paste the ID returned by "Create product" here ───────────────────────────
+@newProductId = da0f3f5e-45f9-46e8-910a-a52b8b76f9d1
+
+# ── paste the ID returned by "Create order" here ─────────────────────────────
+@newOrderId = 00000000-0000-0000-0000-000000000000
+
+
+###############################################################################
+# PRODUCT SERVICE
+###############################################################################
+
+### Health check
+GET {{productHost}}/health
+
+###
+
+### Get all products
+GET {{productHost}}/api/products
+Accept: application/json
+
+###
+
+### Get product by ID  (set @productId above first)
+GET {{productHost}}/api/products/{{productId}}
+Accept: application/json
+
+###
+
+### Filter products by category
+GET {{productHost}}/api/products/category/Widgets
+Accept: application/json
+
+###
+
+### Create a new product  (copy the returned GUID into @newProductId)
+POST {{productHost}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard",
+  "description": "Tactile switches, TKL layout",
+  "price": 129.99,
+  "currency": "GBP",
+  "stockQuantity": 50,
+  "category": "Electronics"
+}
+
+###
+
+### Update the newly created product  (set @newProductId above first)
+PUT {{productHost}}/api/products/{{newProductId}}
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard Pro",
+  "description": "Tactile switches, full layout",
+  "price": 149.99,
+  "currency": "GBP",
+  "stockQuantity": 300,
+  "category": "Electronics"
+}
+
+###
+
+### Soft-delete (deactivate) the newly created product
+DELETE {{productHost}}/api/products/{{newProductId}}
+
+###
+
+### Confirm it's gone — deactivated products are excluded from the list
+GET {{productHost}}/api/products
+Accept: application/json
+
+
+###############################################################################
+# ORDER SERVICE
+###############################################################################
+
+### Health check
+GET {{orderHost}}/health
+
+###
+
+### Get all orders
+GET {{orderHost}}/api/orders
+Accept: application/json
+
+###
+
+### Get order by ID  (set @orderId above first)
+GET {{orderHost}}/api/orders/{{orderId}}
+Accept: application/json
+
+###
+
+### Get orders for the seeded customer
+GET {{orderHost}}/api/orders/customer/customer-001
+Accept: application/json
+
+###
+
+### Create a new order  (copy the returned GUID into @newOrderId)
+POST {{orderHost}}/api/orders
+Content-Type: application/json
+
+{
+  "customerId": "CUST-042",
+  "items": [
+    {
+      "productId": "00000000-0000-0000-0000-000000000001",
+      "productName": "Widget A",
+      "quantity": 2,
+      "unitPrice": 49.99,
+      "currency": "GBP"
+    },
+    {
+      "productId": "00000000-0000-0000-0000-000000000002",
+      "productName": "Gadget B",
+      "quantity": 1,
+      "unitPrice": 19.99,
+      "currency": "GBP"
+    }
+  ]
+}
+
+###
+
+### Advance status: Pending (0) → Confirmed (1)  (set @newOrderId above first)
+PATCH {{orderHost}}/api/orders/{{newOrderId}}/status
+Content-Type: application/json
+
+{ "status": 1 }
+
+###
+
+### Advance status: Confirmed (1) → Shipped (2)
+PATCH {{orderHost}}/api/orders/{{newOrderId}}/status
+Content-Type: application/json
+
+{ "status": 2 }
+
+###
+
+### Advance status: Shipped (2) → Delivered (3)
+PATCH {{orderHost}}/api/orders/{{newOrderId}}/status
+Content-Type: application/json
+
+{ "status": 3 }
+
+###
+
+### ❌ Invalid transition — state machine rejects Delivered → Cancelled (expect 400)
+PATCH {{orderHost}}/api/orders/{{newOrderId}}/status
+Content-Type: application/json
+
+{ "status": 4 }
+
+###
+
+### ❌ Not found — expect 404
+GET {{orderHost}}/api/orders/00000000-0000-0000-0000-000000000000
+Accept: application/json
