@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       acr_name:
-        description: 'Azure Container Registry name (without .azurecr.io)'
-        required: true
+        description: 'Azure Container Registry name (without .azurecr.io) — overrides the ACR_NAME secret when provided'
+        required: false
+        default: ''
         type: string
       image_tag:
         description: 'Image tag (defaults to the short commit SHA)'
@@ -14,7 +15,6 @@ on:
         type: string
 
 env:
-  REGISTRY: ${{ github.event.inputs.acr_name }}.azurecr.io
   IMAGE_TAG: ${{ github.event.inputs.image_tag != '' && github.event.inputs.image_tag || github.sha }}
 
 jobs:
@@ -35,10 +35,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Resolve registry name
+        id: registry
+        run: |
+          ACR_NAME="${{ github.event.inputs.acr_name }}"
+          if [ -z "$ACR_NAME" ]; then
+            ACR_NAME="${{ secrets.ACR_NAME }}"
+          fi
+          if [ -z "$ACR_NAME" ]; then
+            echo "::error::ACR name must be provided via the workflow input or the ACR_NAME secret."
+            exit 1
+          fi
+          echo "login_server=${ACR_NAME}.azurecr.io" >> "$GITHUB_OUTPUT"
+
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v2
         with:
-          login-server: ${{ env.REGISTRY }}
+          login-server: ${{ steps.registry.outputs.login_server }}
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
@@ -52,7 +65,7 @@ jobs:
           file: ${{ matrix.service.dockerfile }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ matrix.service.name }}:${{ env.IMAGE_TAG }}
-            ${{ env.REGISTRY }}/${{ matrix.service.name }}:latest
+            ${{ steps.registry.outputs.login_server }}/${{ matrix.service.name }}:${{ env.IMAGE_TAG }}
+            ${{ steps.registry.outputs.login_server }}/${{ matrix.service.name }}:latest
           cache-from: type=gha,scope=${{ matrix.service.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
