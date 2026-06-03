@@ -74,8 +74,8 @@ Each service follows the same four-layer DDD structure:
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  API  (HTTP surface, controllers, OpenAPI, DI wiring) │
-│  depends on Application + Infrastructure              │
+│  API  (HTTP surface, Minimal API endpoints, OpenAPI, DI wiring) │
+│  depends on Application + Infrastructure                        │
 ├──────────────────────────────────────────────────────┤
 │  Application  (use-cases, CQRS commands/queries,      │
 │               DTOs, service interfaces)               │
@@ -173,7 +173,7 @@ Application/
 
 **Commands and Queries** are plain C# records with no framework marker interfaces. They carry only the data needed for a use-case — nothing more.
 
-**`IProductService`** is the public API of the Application layer. The API controller depends on this interface, not on any implementation. This makes the application layer unit-testable in isolation.
+**`IProductService`** is the public API of the Application layer. The endpoint handlers depend on this interface, not on any implementation. This makes the application layer unit-testable in isolation.
 
 **`ProductApplicationService`** implements all six use-cases: `GetAllAsync`, `GetByIdAsync`, `GetByCategoryAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`. It translates between the HTTP-facing `Command`/`Query` records and the Domain's aggregate root, then maps the result to a `ProductDto` before returning.
 
@@ -209,19 +209,21 @@ The HTTP host. Responsible for routing, serialisation, OpenAPI documentation, an
 
 ```
 API/
-├── Controllers/
-│   └── ProductsController.cs   # 6 endpoints, injects IProductService
+├── Endpoints/
+│   └── ProductEndpoints.cs     # 6 endpoints as static methods, registered via MapProductEndpoints()
 ├── Program.cs                  # DI + middleware pipeline
 └── Dockerfile                  # Multi-stage build → non-root ASP.NET runtime image
 ```
 
-**`ProductsController`** uses `ActionResult<T>` and `[ProducesResponseType<T>]` generics (C# 10+) so that OpenAPI can infer response schemas without extra attributes.
+**`ProductEndpoints`** is a static class with an `IEndpointRouteBuilder` extension method `MapProductEndpoints()`. Each endpoint is a private static async method injected via parameter binding — no controller class, no `[ApiController]`, no `[Route]` attributes. `TypedResults` (not `Results`) is used throughout for compile-time response-type correctness and automatic OpenAPI metadata flow.
 
 **`Program.cs`** registers:
 - `AddOpenApi(...)` with a document transformer for title/version metadata
 - `AddScoped<IProductService, ProductApplicationService>()`
 - `AddProductInfrastructure()` (which adds the repository singleton)
 - `AddHealthChecks()` for the ACA `/health` probe
+
+And maps endpoints with `app.MapProductEndpoints()` — there is no `AddControllers()`, `UseAuthorization()`, or `MapControllers()` in the pipeline.
 
 **OpenAPI**: served at `/openapi/v1.json`. The Scalar interactive UI is served at `/scalar/v1`. No Swashbuckle — `Microsoft.AspNetCore.OpenApi` is the first-party package included with .NET 10.
 
@@ -293,13 +295,13 @@ Identical in structure to the Product infrastructure. Seeds one demo order for `
 
 ```
 API/
-├── Controllers/
-│   └── OrdersController.cs   # 5 endpoints; PATCH /api/orders/{id}/status for state transitions
+├── Endpoints/
+│   └── OrderEndpoints.cs     # 5 endpoints as static methods, registered via MapOrderEndpoints()
 ├── Program.cs
 └── Dockerfile
 ```
 
-The `PATCH` endpoint accepts a `UpdateStatusRequest(OrderStatus Status)` body. The `OrderStatus` enum serialises as an integer in JSON (`0`–`4`).
+The `PATCH` endpoint accepts a `UpdateStatusRequest(OrderStatus Status)` body. The `OrderStatus` enum serialises as an integer in JSON (`0`–`4`). The status-update handler routes the error response intelligently: if the error message contains "not found" it returns `404 NotFound<string>`, otherwise `400 BadRequest<string>`.
 
 ---
 
@@ -376,7 +378,7 @@ Result.Success()
 Result.Failure("Cannot transition from Shipped to Pending.")
 ```
 
-The controller checks `result.IsSuccess` and maps to the appropriate HTTP status code (`200`, `404`, `400`). This keeps the application layer framework-agnostic — it returns data and errors, not `IActionResult`.
+The endpoint handler checks `result.IsSuccess` and maps to the appropriate HTTP status code (`200`, `404`, `400`). This keeps the application layer framework-agnostic — it returns data and errors, not `IActionResult`.
 
 ### 5.7 Order State Machine
 
@@ -391,7 +393,7 @@ Shipped    → Delivered ✓
 anything else          ✗  (throws InvalidOperationException)
 ```
 
-The rules live entirely in the Domain layer. The API controller and application service have no knowledge of which transitions are valid.
+The rules live entirely in the Domain layer. The endpoint handler and application service have no knowledge of which transitions are valid.
 
 ---
 

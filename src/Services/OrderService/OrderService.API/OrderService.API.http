@@ -1,6 +1,63 @@
 @OrderService.API_HostAddress = http://localhost:5293
 
-GET {{OrderService.API_HostAddress}}/weatherforecast/
+### List all orders
+GET {{OrderService.API_HostAddress}}/api/orders
 Accept: application/json
+
+###
+
+### Get a single order by ID (replace with a real ID from the list above)
+GET {{OrderService.API_HostAddress}}/api/orders/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+###
+
+### Get orders for a customer
+GET {{OrderService.API_HostAddress}}/api/orders/customer/CUST-001
+Accept: application/json
+
+###
+
+### Create a new order
+POST {{OrderService.API_HostAddress}}/api/orders
+Content-Type: application/json
+
+{
+  "customerId": "CUST-042",
+  "items": [
+    {
+      "productId": "00000000-0000-0000-0000-000000000001",
+      "productName": "Widget A",
+      "quantity": 2,
+      "unitPrice": 49.99,
+      "currency": "GBP"
+    }
+  ]
+}
+
+###
+
+### Advance order status: Pending (0) → Confirmed (1) (replace with a real ID)
+PATCH {{OrderService.API_HostAddress}}/api/orders/00000000-0000-0000-0000-000000000001/status
+Content-Type: application/json
+
+{
+  "status": 1
+}
+
+###
+
+### Try an invalid transition to see the state machine reject it: Pending (0) → Delivered (3)
+PATCH {{OrderService.API_HostAddress}}/api/orders/00000000-0000-0000-0000-000000000001/status
+Content-Type: application/json
+
+{
+  "status": 3
+}
+
+###
+
+### Health check
+GET {{OrderService.API_HostAddress}}/health
 
 ###

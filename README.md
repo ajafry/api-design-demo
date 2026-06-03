@@ -19,7 +19,7 @@ ApiDesignDemo/
 │       │   ├── Domain/             # Entities, Value Objects, Domain Events, Repo interfaces
 │       │   ├── Application/        # CQRS Commands, Queries, Application Services
 │       │   ├── Infrastructure/     # In-memory repository (swap for EF/Cosmos DB)
-│       │   └── API/                # ASP.NET Controller + Scalar UI + Dockerfile
+│       │   └── API/                # Minimal API endpoints + Scalar UI + Dockerfile
 │       │
 │       └── OrderService/           # Orders bounded context
 │           ├── Domain/

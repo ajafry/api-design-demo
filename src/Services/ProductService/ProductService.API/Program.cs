@@ -1,3 +1,4 @@
+using ProductService.API.Endpoints;
 using ProductService.Application.Services;
 using ProductService.Infrastructure;
 using Scalar.AspNetCore;
@@ -5,11 +6,11 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // ----- Services -----
-builder.Services.AddControllers();
 builder.Services.AddOpenApi(opt =>
 {
     opt.AddDocumentTransformer((doc, _, _) =>
     {
+        opt.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
         doc.Info = new()
         {
             Title = "Product Service API",
@@ -36,9 +37,8 @@ app.MapOpenApi();                       // serves /openapi/v1.json
 app.MapScalarApiReference();            // serves /scalar/v1
 
 app.UseHttpsRedirection();
-app.UseAuthorization();
 
-app.MapControllers();
+app.MapProductEndpoints();
 app.MapHealthChecks("/health");
 
 app.Run();

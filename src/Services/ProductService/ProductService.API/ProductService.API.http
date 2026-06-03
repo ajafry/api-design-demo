@@ -1,6 +1,59 @@
 @ProductService.API_HostAddress = http://localhost:5190
 
-GET {{ProductService.API_HostAddress}}/weatherforecast/
+### List all active products
+GET {{ProductService.API_HostAddress}}/api/products
 Accept: application/json
+
+###
+
+### Get a single product by ID (replace with a real ID from the list above)
+GET {{ProductService.API_HostAddress}}/api/products/00000000-0000-0000-0000-000000000001
+Accept: application/json
+
+###
+
+### Filter products by category
+GET {{ProductService.API_HostAddress}}/api/products/category/Electronics
+Accept: application/json
+
+###
+
+### Create a new product
+POST {{ProductService.API_HostAddress}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard",
+  "description": "Tactile switches, TKL layout",
+  "price": 129.99,
+  "currency": "GBP",
+  "stockQuantity": 50,
+  "category": "Electronics"
+}
+
+###
+
+### Update a product (replace with a real ID)
+PUT {{ProductService.API_HostAddress}}/api/products/00000000-0000-0000-0000-000000000001
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard Pro",
+  "description": "Tactile switches, full layout",
+  "price": 149.99,
+  "currency": "GBP",
+  "stockQuantity": 30,
+  "category": "Electronics"
+}
+
+###
+
+### Soft-delete a product (replace with a real ID)
+DELETE {{ProductService.API_HostAddress}}/api/products/00000000-0000-0000-0000-000000000001
+
+###
+
+### Health check
+GET {{ProductService.API_HostAddress}}/health
 
 ###
