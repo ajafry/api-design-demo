@@ -34,11 +34,13 @@ builder.Services.AddHealthChecks();
 var app = builder.Build();
 
 // ----- Middleware pipeline -----
-// Trust X-Forwarded-Proto from ACA ingress so the OpenAPI spec reports https
-app.UseForwardedHeaders(new ForwardedHeadersOptions
-{
-    ForwardedHeaders = ForwardedHeaders.XForwardedProto
-});
+// Trust X-Forwarded-Proto from ACA ingress so the OpenAPI spec reports https.
+// KnownNetworks/KnownProxies are cleared because ACA's ingress proxy is not
+// on a loopback address, so headers would otherwise be silently ignored.
+var forwardedOptions = new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedProto };
+forwardedOptions.KnownIPNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOptions);
 
 app.MapOpenApi();                       // serves /openapi/v1.json
 app.MapScalarApiReference();            // serves /scalar/v1
