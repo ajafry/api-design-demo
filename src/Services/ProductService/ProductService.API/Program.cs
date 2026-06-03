@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using ProductService.API.Endpoints;
 using ProductService.Application.Services;
 using ProductService.Infrastructure;
@@ -33,6 +34,12 @@ builder.Services.AddHealthChecks();
 var app = builder.Build();
 
 // ----- Middleware pipeline -----
+// Trust X-Forwarded-Proto from ACA ingress so the OpenAPI spec reports https
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto
+});
+
 app.MapOpenApi();                       // serves /openapi/v1.json
 app.MapScalarApiReference();            // serves /scalar/v1
 
