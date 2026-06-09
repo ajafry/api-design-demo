@@ -1,4 +1,5 @@
 using OrderService.Application.Commands;
+using OrderService.Application.Contracts;
 using OrderService.Application.DTOs;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Repositories;
@@ -7,7 +8,9 @@ using SharedKernel;
 
 namespace OrderService.Application.Services;
 
-public class OrderApplicationService(IOrderRepository repository) : IOrderService
+public class OrderApplicationService(
+    IOrderRepository repository,
+    IProductCatalogClient productCatalog) : IOrderService
 {
     public async Task<IReadOnlyList<OrderDto>> GetAllAsync(CancellationToken ct = default)
     {
@@ -29,10 +32,38 @@ public class OrderApplicationService(IOrderRepository repository) : IOrderServic
 
     public async Task<Result<Guid>> CreateAsync(CreateOrderCommand command, CancellationToken ct = default)
     {
-        var items = command.Items.Select(i =>
-            OrderItem.Create(i.ProductId, i.ProductName, i.Quantity, i.UnitPrice, i.Currency));
+        if (command.Items is not { Count: > 0 })
+            return Result<Guid>.Failure("An order must contain at least one item.");
 
-        var order = Order.Create(command.CustomerId, items);
+        // Validate each product against the catalogue and use authoritative price/currency.
+        var enrichedItems = new List<OrderItem>();
+        foreach (var item in command.Items)
+        {
+            ProductLookup? product;
+            try
+            {
+                product = await productCatalog.GetByIdAsync(item.ProductId, ct);
+            }
+            catch (HttpRequestException ex)
+            {
+                return Result<Guid>.Failure($"Could not reach Product Catalogue: {ex.Message}");
+            }
+
+            if (product is null)
+                return Result<Guid>.Failure($"Product {item.ProductId} not found in the catalogue.");
+
+            if (!product.IsActive)
+                return Result<Guid>.Failure($"Product '{product.Name}' ({item.ProductId}) is no longer available.");
+
+            enrichedItems.Add(OrderItem.Create(
+                product.Id,
+                product.Name,
+                item.Quantity,
+                product.Price,      // authoritative catalogue price — ignores client-supplied price
+                product.Currency));
+        }
+
+        var order = Order.Create(command.CustomerId, enrichedItems);
         await repository.AddAsync(order, ct);
         return Result<Guid>.Success(order.Id);
     }

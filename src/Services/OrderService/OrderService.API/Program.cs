@@ -26,7 +26,7 @@ builder.Services.AddOpenApi(opt =>
 builder.Services.AddScoped<IOrderService, OrderApplicationService>();
 
 // Infrastructure
-builder.Services.AddOrderInfrastructure();
+builder.Services.AddOrderInfrastructure(builder.Configuration);
 
 // Health checks - required for ACA liveness/readiness probes
 builder.Services.AddHealthChecks();
