@@ -15,4 +15,10 @@
     <Project Path="src/Services/ProductService/ProductService.Domain/ProductService.Domain.csproj" />
     <Project Path="src/Services/ProductService/ProductService.Infrastructure/ProductService.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OrderService.IntegrationTests/OrderService.IntegrationTests.csproj" />
+    <Project Path="tests/OrderService.Tests/OrderService.Tests.csproj" />
+    <Project Path="tests/ProductService.Tests/ProductService.Tests.csproj" />
+    <Project Path="tests/SharedKernel.Tests/SharedKernel.Tests.csproj" />
+  </Folder>
 </Solution>
