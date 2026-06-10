@@ -25,10 +25,10 @@ jobs:
         run: dotnet build ApiDesignDemo.slnx --no-restore --configuration Release
 
       - name: Run SharedKernel unit tests
-        run: dotnet test tests/SharedKernel.Tests/SharedKernel.Tests.csproj --no-build --configuration Release --logger "github;verbosity=detailed"
+        run: dotnet test tests/SharedKernel.Tests/SharedKernel.Tests.csproj --no-build --configuration Release
 
       - name: Run ProductService unit tests
-        run: dotnet test tests/ProductService.Tests/ProductService.Tests.csproj --no-build --configuration Release --logger "github;verbosity=detailed"
+        run: dotnet test tests/ProductService.Tests/ProductService.Tests.csproj --no-build --configuration Release
 
       - name: Run OrderService unit tests
-        run: dotnet test tests/OrderService.Tests/OrderService.Tests.csproj --no-build --configuration Release --logger "github;verbosity=detailed"
+        run: dotnet test tests/OrderService.Tests/OrderService.Tests.csproj --no-build --configuration Release
