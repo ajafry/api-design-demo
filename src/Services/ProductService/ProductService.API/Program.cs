@@ -1,10 +1,26 @@
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.HttpOverrides;
+using OpenTelemetry.Resources;
 using ProductService.API.Endpoints;
 using ProductService.Application.Services;
 using ProductService.Infrastructure;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ----- Observability -----
+// Sends ILogger output, ASP.NET request telemetry, dependencies, and exceptions
+// to Application Insights. Only registered when a connection string is supplied
+// (set APPLICATIONINSIGHTS_CONNECTION_STRING as a Container App env var/secret
+// in production). Skipped in local dev and integration tests where the SDK
+// would otherwise throw on missing configuration.
+if (!string.IsNullOrWhiteSpace(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
+{
+    builder.Services
+        .AddOpenTelemetry()
+        .ConfigureResource(r => r.AddService("product-service"))
+        .UseAzureMonitor();
+}
 
 // ----- Services -----
 builder.Services.AddOpenApi(opt =>
