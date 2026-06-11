@@ -178,3 +178,96 @@ Content-Type: application/json
 ### ❌ Not found — expect 404
 GET {{orderHost}}/api/orders/00000000-0000-0000-0000-000000000000
 Accept: application/json
+
+
+###############################################################################
+# CROSS-SERVICE INTEGRATION
+# Demonstrates Order Service calling Product Service to validate the catalog.
+# Run these in order, top-to-bottom.
+###############################################################################
+
+### 1. Create a fresh product in Product Service  (copy the returned GUID into @newProductId)
+POST {{productHost}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Integration Demo Widget",
+  "description": "Used to prove Order Service calls Product Service",
+  "price": 24.50,
+  "currency": "GBP",
+  "stockQuantity": 100,
+  "category": "Widgets"
+}
+
+###
+
+### 2. ✅ Create an order using that REAL product ID
+###    Order Service will call Product Service at GET /api/products/{{newProductId}}
+###    to validate it exists, is active, and to use its REAL price (not the one in the body).
+POST {{orderHost}}/api/orders
+Content-Type: application/json
+
+{
+  "customerId": "CUST-INTEGRATION",
+  "items": [
+    {
+      "productId": "{{newProductId}}",
+      "productName": "(ignored — catalog name wins)",
+      "quantity": 2,
+      "unitPrice": 999.99,
+      "currency": "USD"
+    }
+  ]
+}
+
+###
+
+### 3. Read the order back — total should be 49.00 (2 × £24.50), NOT 1999.98
+###    Proves Order Service trusted the catalog price over the client's claim.
+GET {{orderHost}}/api/orders/{{newOrderId}}
+Accept: application/json
+
+###
+
+### 4. ❌ Now try to create an order with a product ID that doesn't exist in the catalog
+###    Order Service calls Product Service, gets 404, returns 400 BadRequest.
+POST {{orderHost}}/api/orders
+Content-Type: application/json
+
+{
+  "customerId": "CUST-INTEGRATION",
+  "items": [
+    {
+      "productId": "00000000-0000-0000-0000-000000000999",
+      "productName": "Does not exist",
+      "quantity": 1,
+      "unitPrice": 10.00,
+      "currency": "GBP"
+    }
+  ]
+}
+
+###
+
+### 5. ❌ Deactivate the product, then try ordering it again — expect 400
+DELETE {{productHost}}/api/products/{{newProductId}}
+
+###
+
+### 6. ❌ Order Service now sees the product as inactive and rejects the order
+POST {{orderHost}}/api/orders
+Content-Type: application/json
+
+{
+  "customerId": "CUST-INTEGRATION",
+  "items": [
+    {
+      "productId": "{{newProductId}}",
+      "productName": "Deactivated",
+      "quantity": 1,
+      "unitPrice": 24.50,
+      "currency": "GBP"
+    }
+  ]
+}
+

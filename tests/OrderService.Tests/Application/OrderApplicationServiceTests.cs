@@ -86,12 +86,15 @@ public class OrderApplicationServiceTests
     [Fact]
     public async Task CreateAsync_ProductNotFound_ReturnsFailure()
     {
+        // catalogue returns null for any product ID
         _catalog.GetByIdAsync(Arg.Any<Guid>(), default).ReturnsForAnyArgs((ProductLookup?)null);
         var command = new CreateOrderCommand("c1", [ItemRequest(ProductId1)]);
 
+        // we expect a failure because the product ID in the command doesn't exist in the catalogue, as it
+        // always returns null
         var result = await _sut.CreateAsync(command);
 
-        Assert.False(result.IsSuccess);
+        Assert.False(result.IsSuccess);         // Failure is what we expect here
         Assert.Contains("not found", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 

@@ -109,12 +109,15 @@ public class OrderEndpointsTests : IClassFixture<OrderServiceWebAppFactory>
     public async Task Create_UsesCataloguePriceNotClientPrice()
     {
         // Catalog says £19.99; client sends £99 — order total must use catalog price
+        // we have initialized a product with price = 19.99, qty = 2 → total = 39.98
         _catalog.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
-            .Returns(ActiveProduct(ProductId)); // price = 19.99, qty = 2 → total = 39.98
+            .Returns(ActiveProduct(ProductId)); 
 
         var response = await _client.PostAsJsonAsync("api/orders", SingleItemOrder(ProductId));
         var orderId = await response.Content.ReadFromJsonAsync<Guid>();
 
+        // The actual order creation takes the real product price, not what the client
+        // passed in the request. So we expect 2 × £19.99 = £39.98, not 2 × £99.
         var order = await _client.GetFromJsonAsync<OrderDto>($"api/orders/{orderId}");
         Assert.Equal(39.98m, order!.TotalAmount);
     }
