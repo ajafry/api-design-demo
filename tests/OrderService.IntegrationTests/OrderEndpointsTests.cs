@@ -28,7 +28,7 @@ public class OrderEndpointsTests : IClassFixture<OrderServiceWebAppFactory>
         new(id, "Widget Pro", 19.99m, "GBP", IsActive: true);
 
     private static CreateOrderCommand SingleItemOrder(Guid productId) =>
-        new("customer-integration", [new OrderItemRequest(productId, "ignored", 2, 99m, "USD")]);
+        new("customer-integration", [new OrderItemRequest(productId, "ignored", 2, 1m, "USD")]);
 
     /// Creates a Pending order and returns its ID.
     private async Task<Guid> CreateOrderAsync(Guid productId)
@@ -108,7 +108,7 @@ public class OrderEndpointsTests : IClassFixture<OrderServiceWebAppFactory>
     [Fact]
     public async Task Create_UsesCataloguePriceNotClientPrice()
     {
-        // Catalog says £19.99; client sends £99 — order total must use catalog price
+        // Catalog says £19.99; client sends £1 — order total must use catalog price
         // we have initialized a product with price = 19.99, qty = 2 → total = 39.98
         _catalog.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(ActiveProduct(ProductId)); 
@@ -117,7 +117,7 @@ public class OrderEndpointsTests : IClassFixture<OrderServiceWebAppFactory>
         var orderId = await response.Content.ReadFromJsonAsync<Guid>();
 
         // The actual order creation takes the real product price, not what the client
-        // passed in the request. So we expect 2 × £19.99 = £39.98, not 2 × £99.
+        // passed in the request. So we expect 2 × £19.99 = £39.98, not 2 × £1.
         var order = await _client.GetFromJsonAsync<OrderDto>($"api/orders/{orderId}");
         Assert.Equal(39.98m, order!.TotalAmount);
     }
